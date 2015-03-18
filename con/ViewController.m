@@ -85,6 +85,7 @@
     
     text=[[NSString alloc] initWithData:_responseData encoding: NSUTF8StringEncoding];
     NSArray *SectionArray = [text componentsSeparatedByString:@"},"];
+    NSLog(@"%@",text);
     NSLog(@"%@",SectionArray);
     
     NSArray *SysArray = [ SectionArray[1] componentsSeparatedByString:@","];
@@ -160,15 +161,18 @@
 -(NSString *) GetWeatherFormString: (NSString *)StringWithWeather Caption: (NSString *)WhatIsIt IndexForStart: (int)StartIndex {
     
     NSRange ResulStringRange = NSMakeRange(StartIndex,  StringWithWeather.length-StartIndex);
-    //if ([WhatIsIt isEqual:@"Temperature: "]|[WhatIsIt isEqual:@"Min Temperature: "]|[WhatIsIt isEqual:@"Max Temperature: "])
-    //{return [WhatIsIt stringByAppendingString:[self TemperatureInCelsius:(long)[StringWithWeather substringWithRange:ResulStringRange]]];}
+    if ([WhatIsIt isEqual:@"Temperature: "]|[WhatIsIt isEqual:@"Min Temperature: "]|[WhatIsIt isEqual:@"Max Temperature: "])
+    {return [WhatIsIt stringByAppendingString:[self TemperatureInCelsius:[StringWithWeather substringWithRange:ResulStringRange]]];}
     
     return [WhatIsIt stringByAppendingString:[StringWithWeather substringWithRange:ResulStringRange]];
 }
 
-- (long) TemperatureInCelsius:(long)TempInKelvin{
-    
-    return TempInKelvin-273;
+- (NSString *) TemperatureInCelsius:(NSString *)TempInKelvin{
+   
+    long Temper = [TempInKelvin floatValue];
+    NSString *StrTemp = [NSString stringWithFormat:@"%1.2lu", Temper-273];
+
+    return StrTemp;
 }
 
 - (NSString *)timeFormatted:(int)totalSeconds
