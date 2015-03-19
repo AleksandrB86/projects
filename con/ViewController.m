@@ -34,7 +34,7 @@
     UILabel* label = (UILabel*)[cell viewWithTag:5];
     
     NSLog(@"%@",ShowWeather[indexPath.row]);
-    label.text = ShowWeather[indexPath.row];//[NSString stringWithFormat:@"%ld",(long)indexPath.row];
+    label.text = ShowWeather[indexPath.row];
     return cell;
 }
 
@@ -55,6 +55,7 @@
     { _Lable1.text = @"Connecting...";
         NSLog(@"%s", "Connection Work");
     }else{
+        //Вывод на экран ошибки соединения
         _Lable1.text=@"Error!";
     }
 }
@@ -78,78 +79,68 @@
     return nil;
 }
 - (void)connectionDidFinishLoading:(NSURLConnection *)connection {
-    // Обработка переменной
-    NSString *text;
+    // Обработка полученной информации
     
-    ShowWeather = [[NSMutableArray alloc] init];
+    ShowWeather = [[NSMutableArray alloc] init]; //создание таблицы для вывода
     
-    text=[[NSString alloc] initWithData:_responseData encoding: NSUTF8StringEncoding];
-    NSArray *SectionArray = [text componentsSeparatedByString:@"},"];
-    NSLog(@"%@",text);
-    NSLog(@"%@",SectionArray);
     
-    NSArray *SysArray = [ SectionArray[1] componentsSeparatedByString:@","];
-    NSLog(@"%s", "Work with array Sys");
-
-    
-    [ShowWeather addObject:[self GetWeatherFormString:SysArray[3] Caption:@"Country: \"" IndexForStart:11]];
-
-    //[ShowWeather addObject:[self timeFormatted:(int)[self GetWeatherFormString:SysArray[2] Caption:@"Sunrise: " IndexForStart:10]]];
-    
-    //[ShowWeather addObject:[self timeFormatted:(int)[self GetWeatherFormString:SysArray[3] Caption:@"Sunset: " IndexForStart:9]]];
-    
-    NSArray *WeatherArray = [SectionArray[2] componentsSeparatedByString:@","];
-    NSLog(@"%s", "Work with array Weather");
-    
-    [ShowWeather addObject:[self GetWeatherFormString:WeatherArray[1] Caption:@"Weather: \"" IndexForStart:8]];
-     NSLog(@"%s", "Worked with array Weather:maine");
-
-    [ShowWeather addObject:[self GetWeatherFormString:WeatherArray[2] Caption:@"Description: \"" IndexForStart:15]];
-     NSLog(@"%s", "Worked with array Weather:Description");
-
-    
-    [ShowWeather addObject:[self GetWeatherFormString:WeatherArray[5] Caption:@"Temperature: " IndexForStart:15]];
-     NSLog(@"%s", "Worked with array Weather:Temp");
-    
-    [ShowWeather addObject:[self GetWeatherFormString:WeatherArray[8] Caption:@"Min Temperature: " IndexForStart:11]];
-     NSLog(@"%s", "Worked with array Weather:Temp min");
+    NSError *e = nil;
+    NSDictionary *JSONWeather = [NSJSONSerialization JSONObjectWithData: _responseData options: NSJSONReadingMutableContainers error: &e]; //преобразование полученной информации через NSJSONSerialization
    
+    //NSLog(@"%@",JSONWeather); //вывод полученных данных в консоль
     
-    [ShowWeather addObject:[self GetWeatherFormString:WeatherArray[9] Caption:@"Max Temperature: " IndexForStart:11]];
-     NSLog(@"%s", "Worked with array Weather:temp_max");
+    NSDictionary *Clouds = [self GetSubDict:JSONWeather KeyToFind:@"clouds"]; //получение подсловаря с данными по облачности
     
-    [ShowWeather addObject:[self GetWeatherFormString:WeatherArray[6] Caption:@"Preasure: " IndexForStart:13]];
-    NSLog(@"%s", "Worked with array Weather:preasure");
+    [ShowWeather addObject:[self GetStringFromDict:Clouds KeyToFind:@"all" Description:@"Clouds: " Units:@" \%"]]; // добавление данных по облачности
+    NSLog(@"Clouds added"); //вывод в консоль об успешном добавлении
     
-    [ShowWeather addObject:[self GetWeatherFormString:WeatherArray[7] Caption:@"Humidity: " IndexForStart:11]];
-    NSLog(@"%s", "Worked with array Weather:humidity");
+    NSDictionary *Main = [self GetSubDict:JSONWeather KeyToFind:@"main"];// получение подсловаря с основным данным
+     NSLog(@"Maine added");
     
-    NSArray *WindArray = [SectionArray[3] componentsSeparatedByString:@","];
-    NSLog(@"%s", "Work with array Wind");
-   
-   [ShowWeather addObject:[self GetWeatherFormString:WindArray[0] Caption:@"Wind Speed: " IndexForStart:16]];
+    [ShowWeather addObject:[self GetStringFromDict:Main KeyToFind:@"humidity" Description:@"Humidity: " Units:@" \%"]];
+    [ShowWeather addObject:[self GetStringFromDict:Main KeyToFind:@"pressure" Description:@"Pressure: " Units:@" mbar"]];
+    [ShowWeather addObject:[self GetStringFromDict:Main KeyToFind:@"temp" Description:@"Temperature: " Units:@" С"]];
+    [ShowWeather addObject:[self GetStringFromDict:Main KeyToFind:@"temp_max" Description:@"Max Temperature: " Units:@" С"]];
+    [ShowWeather addObject:[self GetStringFromDict:Main KeyToFind:@"temp_min" Description:@"Min Temperature: " Units:@" C"]];
+    
+    
+    [ShowWeather insertObject:[self GetStringFromDict:JSONWeather KeyToFind:@"name" Description:@"City: " Units:@""] atIndex:0];
+     NSLog(@"City added");//вывод в консоль об успешном добавлении
+    
+    NSDictionary *Sys = [self GetSubDict:JSONWeather KeyToFind:@"sys"];//получение подсловаря с системными данными
+     NSLog(@"Sys added");//вывод в консоль об успешном добавлении
+    
+    [ShowWeather insertObject:[self GetStringFromDict:Sys KeyToFind:@"country" Description:@"Country: " Units:@""] atIndex:0];
+    [ShowWeather addObject:[self GetStringFromDict:Sys KeyToFind:@"sunrise" Description:@"Sunrise: "Units:@""]];
+    [ShowWeather addObject:[self GetStringFromDict:Sys KeyToFind:@"sunset" Description:@"Sunset: "Units:@""]];
+    
+    
+    if (JSONWeather[@"weather"]!=Nil)//проверка на существование данных по погоде
+    {
+        NSDictionary *Weather = JSONWeather[@"weather"][0];//получение подсловаря с данными по погоде из таблицы, содержащей один элемент
+        NSLog(@"Weather added");//вывод в консоль об успешном добавлении
+        [ShowWeather addObject:[self GetStringFromDict:Weather KeyToFind:@"main" Description:@"Weather: " Units:@""]];
+        [ShowWeather addObject:[self GetStringFromDict:Weather KeyToFind:@"description" Description:@"Deteil: "Units:@""]];
+    }
 
-   // NSLog(@"%s", "Work with array Clouds");
-    //[ShowWeather addObject:[self GetWeatherFormString:SectionArray[4] Caption:@"Clouds: " IndexForStart:11]];
+
     
-   
-   NSArray *DtArray = [SectionArray[5] componentsSeparatedByString:@","];
-       NSLog(@"%s", "Work with array DT");
-    [ShowWeather insertObject:[self GetWeatherFormString:DtArray[2] Caption:@"City: " IndexForStart:7] atIndex:1];
+     NSDictionary *Wind = [self GetSubDict:JSONWeather KeyToFind:@"wind"];//получение подсловаря с данными по ветру
+     NSLog(@"wind added");//вывод в консоль об успешном добавлении
     
+    [ShowWeather addObject:[self GetStringFromDict:Wind KeyToFind:@"deg" Description:@"Wind: " Units:@" deg"]];
+    [ShowWeather addObject:[self GetStringFromDict:Wind KeyToFind:@"speed" Description:@"Wind speed: " Units:@" mph"]];
     
-    //NSLog(@"%@",text);
-     NSLog(@"%@ %ld",ShowWeather, ShowWeather.count);
-    [_tabelView reloadData];
-    self.tabelView.hidden = NO;
-    self.Lable1.hidden=YES;
+    NSLog(@"%@", ShowWeather);//вывод в консоль полученных данных
+    [_tabelView reloadData]; //перезагрзка таблицы выводит полученные данные в таблицу
+    self.tabelView.hidden = NO; //Отображение таблицы на экране
+    self.Lable1.hidden=YES; //Лейбл с данными о состоянии загрузки прячется
 }
 - (void)connection:(NSURLConnection *)connection didFailWithError:(NSError *)error {
     //  error
     NSLog(@"Error");
+    _Lable1.text =@"Error"; //вывод ошибки в случае прерывания загрузки данных
 }
-
-
 
 
 
@@ -158,35 +149,51 @@
     // Dispose of any resources that can be recreated.
 }
 
--(NSString *) GetWeatherFormString: (NSString *)StringWithWeather Caption: (NSString *)WhatIsIt IndexForStart: (int)StartIndex {
-    
-    NSRange ResulStringRange = NSMakeRange(StartIndex,  StringWithWeather.length-StartIndex);
-    if ([WhatIsIt isEqual:@"Temperature: "]|[WhatIsIt isEqual:@"Min Temperature: "]|[WhatIsIt isEqual:@"Max Temperature: "])
-    {return [WhatIsIt stringByAppendingString:[self TemperatureInCelsius:[StringWithWeather substringWithRange:ResulStringRange]]];}
-    
-    return [WhatIsIt stringByAppendingString:[StringWithWeather substringWithRange:ResulStringRange]];
+-(NSDictionary *) GetSubDict:(id)SuperDict KeyToFind: (NSString *)SearchKey //метод для выделения подсловаря, если подсловарь не найден, возвращает ноль
+{
+    if (SuperDict[SearchKey]!=Nil) //проверка на наличие подсловаря
+    {
+        return SuperDict[SearchKey];
+        
+    }else{return Nil;}
 }
 
+-(NSString *)GetStringFromDict:(id)Dict KeyToFind: (NSString *)SearchKey Description: (NSString *) WhatIsIt Units: (NSString *) Unit //метод для формирования строки с даннми из словая, если данные не найдены, возвращает ноль
+{
+    if (Dict[SearchKey]!=Nil)
+    {
+        if ([WhatIsIt isEqual:@"Temperature: "]|[WhatIsIt isEqual:@"Max Temperature: "]|[WhatIsIt isEqual:@"Min Temperature: "]) //проверка являются ли обрабатываемые данные температурой, которую нужно перевести в градусы Цельсия
+        {
+            return [[WhatIsIt stringByAppendingString:[NSString stringWithFormat:@"%@", [self TemperatureInCelsius:Dict[SearchKey]]]] stringByAppendingString:Unit]; //использование специального метода для конвертации гардусов
+        }
+        if ([WhatIsIt isEqual:@"Sunrise: "]|[WhatIsIt isEqual:@"Sunset: "]) //Проверка являются ли данные датой заката или восхода, которую нужно отформатировать
+        {
+            return [[WhatIsIt stringByAppendingString:[NSString stringWithFormat:@"%@", [self timeFormatted:Dict[SearchKey]]]]stringByAppendingString:Unit]; //использование специального метода для форматирования даты
+        }
+        return [[WhatIsIt stringByAppendingString:[NSString stringWithFormat:@"%@", Dict[SearchKey]]]stringByAppendingString:Unit];
+        
+    }else{return Nil;}
+}
 - (NSString *) TemperatureInCelsius:(NSString *)TempInKelvin{
-   
-    long Temper = [TempInKelvin floatValue];
-    NSString *StrTemp = [NSString stringWithFormat:@"%1.2lu", Temper-273];
+   //Перевод Кельвинов в Цельсии
+    
+    long Temper = [TempInKelvin floatValue]; //перевод полученной строки в число
+    NSString *StrTemp = [NSString stringWithFormat:@"%1.2ld", Temper-273]; //перевод значения в Цельсии
+    
+    return StrTemp; //возврат строки, содержащей температуру в нужных единицах
 
-    return StrTemp;
 }
 
-- (NSString *)timeFormatted:(int)totalSeconds
+- (NSString *)timeFormatted:(NSString *)totalSeconds //функция форматирования даты
 
 {
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init]; //инициализация форматтера
+    [dateFormatter setDateStyle:NSDateFormatterNoStyle]; //установка формата даты: нет стиля - дата не отображается
+    [dateFormatter setTimeStyle:NSDateFormatterMediumStyle]; // установка формата времени
     
-    int seconds = totalSeconds % 60;
+    NSDate *date = [NSDate dateWithTimeIntervalSince1970:[totalSeconds longLongValue]]; //перевод полученного количества секунд в число и перевод к стандартной дате
     
-    int minutes = (totalSeconds / 60) % 60;
-    
-    int hours = totalSeconds / 3600;
-    
-    return [NSString stringWithFormat:@"%02d:%02d:%02d",hours, minutes, seconds];
-    
+    return [NSString stringWithFormat:@"%@", [dateFormatter stringFromDate:date]]; // возврат строки, содержащей время в нужном формате
 }
 
 @end
