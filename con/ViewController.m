@@ -63,7 +63,7 @@
                     NSURLResponse * response = nil;
                     NSError * error = nil;
                     //получение изображения в виде данных
-                    NSData * ImageData = [NSURLConnection sendSynchronousRequest:urlRequest
+                    __block NSData * ImageData = [NSURLConnection sendSynchronousRequest:urlRequest
                                                           returningResponse:&response
                                                                       error:&error];
                 
