@@ -45,31 +45,36 @@
     
     if (indexPath.row==11)
     {
+        //строка адреса с иконками
         NSString *UrlMainePart = @"http://openweathermap.org/img/w/" ;
     
         if (ShowWeather[0]!= Nil)
         {
-            
+            //добавляется адрес конкретной иконки
             NSString *UrlString = [UrlMainePart stringByAppendingString:ShowWeather[0]];
            // Выделение дополнительного потока
             dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
                     
-                dispatch_sync(dispatch_get_main_queue(), ^{
-                // Отправка синхронного запроса
+                
+                sleep(5);
+                // Отправка синхронного запроса изображения
                     NSURLRequest * urlRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:UrlString]];
-                    NSLog(@"%@",UrlString);
+                    //присовение параметрам нулей
                     NSURLResponse * response = nil;
                     NSError * error = nil;
+                    //получение изображения в виде данных
                     NSData * ImageData = [NSURLConnection sendSynchronousRequest:urlRequest
                                                           returningResponse:&response
                                                                       error:&error];
-                        if (error == nil)
-                        {
-                            cell.imageView.image = [UIImage imageWithData:ImageData];
-                            NSLog(@"%@",ShowWeather[indexPath.row+1]);
-                            cell.textLabel.text = ShowWeather[indexPath.row+1];
-                        }
-                    
+                
+                 dispatch_sync(dispatch_get_main_queue(), ^{
+                     if (error == nil)
+                     {
+                         //вывод изображения и информации рядом
+                         cell.imageView.image = [UIImage imageWithData:ImageData];
+                         NSLog(@"%@",ShowWeather[indexPath.row+1]);
+                         cell.textLabel.text = ShowWeather[indexPath.row+1];
+                     }
                     });
                 });
         }

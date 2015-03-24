@@ -65,6 +65,8 @@
                             <constraint firstItem="ABD-9l-DRf" firstAttribute="top" secondItem="kh9-bI-dsS" secondAttribute="top" id="Fkf-SH-hOn"/>
                             <constraint firstAttribute="centerX" secondItem="MLm-iN-fDi" secondAttribute="centerX" id="MOw-ex-nxM"/>
                             <constraint firstAttribute="centerX" secondItem="ABD-9l-DRf" secondAttribute="centerX" id="PUJ-eT-cSC"/>
+                            <constraint firstAttribute="centerY" secondItem="MLm-iN-fDi" secondAttribute="centerY" id="Z3R-jI-7vr"/>
+                            <constraint firstAttribute="centerX" secondItem="MLm-iN-fDi" secondAttribute="centerX" id="eIo-0N-2bo"/>
                             <constraint firstAttribute="trailing" secondItem="ABD-9l-DRf" secondAttribute="trailing" id="iyh-VU-qJW"/>
                             <constraint firstAttribute="centerY" secondItem="MLm-iN-fDi" secondAttribute="centerY" id="kVO-vi-k25"/>
                             <constraint firstItem="ABD-9l-DRf" firstAttribute="leading" secondItem="kh9-bI-dsS" secondAttribute="leading" id="mLv-bq-MeB"/>
@@ -86,10 +88,10 @@
             </objects>
             <point key="canvasLocation" x="612" y="-52"/>
         </scene>
-        <!--Table View Controller-->
+        <!--DetailedWeather-->
         <scene sceneID="xcT-VL-4eP">
             <objects>
-                <tableViewController id="O5j-mk-VOy" sceneMemberID="viewController">
+                <tableViewController title="DetailedWeather" id="O5j-mk-VOy" sceneMemberID="viewController">
                     <tableView key="view" clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="44" sectionHeaderHeight="22" sectionFooterHeight="22" id="iEM-Cv-LJH">
                         <rect key="frame" x="0.0" y="0.0" width="600" height="600"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
