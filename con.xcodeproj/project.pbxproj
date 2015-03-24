@@ -412,6 +412,7 @@
 				4B1B83831AB0EB76005F761D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		4B1B83841AB0EB76005F761D /* Build configuration list for PBXNativeTarget "conTests" */ = {
 			isa = XCConfigurationList;
@@ -420,6 +421,7 @@
 				4B1B83861AB0EB76005F761D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

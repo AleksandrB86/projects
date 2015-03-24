@@ -26,22 +26,65 @@
 
 @implementation ViewController
 
-
++ (instancetype)sharedInstance
+{
+    static ViewController *sharedInstance = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        sharedInstance = [[ViewController alloc] init];
+        // Do any other initialisation stuff here
+    });
+    return sharedInstance;
+}
 
 - (UITableViewCell*)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     UITableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:@"TableCell"];
-    UILabel* label = (UILabel*)[cell viewWithTag:5];
+    cell.selectionStyle = UITableViewCellStyleDefault;
+    //UILabel* label = (UILabel*)[cell viewWithTag:5];
     
-    NSLog(@"%@",ShowWeather[indexPath.row]);
-    label.text = ShowWeather[indexPath.row];
+    if (indexPath.row==11)
+    {
+        NSString *UrlMainePart = @"http://openweathermap.org/img/w/" ;
+    
+        if (ShowWeather[0]!= Nil)
+        {
+            
+            NSString *UrlString = [UrlMainePart stringByAppendingString:ShowWeather[0]];
+           // Выделение дополнительного потока
+            dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+                    
+                dispatch_sync(dispatch_get_main_queue(), ^{
+                // Отправка синхронного запроса
+                    NSURLRequest * urlRequest = [NSURLRequest requestWithURL:[NSURL URLWithString:UrlString]];
+                    NSLog(@"%@",UrlString);
+                    NSURLResponse * response = nil;
+                    NSError * error = nil;
+                    NSData * ImageData = [NSURLConnection sendSynchronousRequest:urlRequest
+                                                          returningResponse:&response
+                                                                      error:&error];
+                        if (error == nil)
+                        {
+                            cell.imageView.image = [UIImage imageWithData:ImageData];
+                            NSLog(@"%@",ShowWeather[indexPath.row+1]);
+                            cell.textLabel.text = ShowWeather[indexPath.row+1];
+                        }
+                    
+                    });
+                });
+        }
+    } else{
+        NSLog(@"%@",ShowWeather[indexPath.row+1]);
+        cell.textLabel.text = ShowWeather[indexPath.row+1];
+        
+        }
     return cell;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
 
-    return ShowWeather.count;
+    return ShowWeather.count-1;
 }
 
 - (void)viewDidLoad {
@@ -51,9 +94,20 @@
     NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"http://api.openweathermap.org/data/2.5/weather?q=Kharkov,ua"]];
     //Создать соединение и послать запрос
     NSURLConnection *connectin = [[NSURLConnection alloc] initWithRequest:request delegate:self];
+    
+    /*
+   dispatch_async(dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^{
+
+       dispatch_sync(dispatch_get_main_queue(), ^{
+           
+       });
+    });*/
+    
+   
+    
     if (connectin)
     { _Lable1.text = @"Connecting...";
-        NSLog(@"%s", "Connection Work");
+        NSLog(@"Connection Work");
     }else{
         //Вывод на экран ошибки соединения
         _Lable1.text=@"Error!";
@@ -89,25 +143,25 @@
    
     //NSLog(@"%@",JSONWeather); //вывод полученных данных в консоль
     
-    NSDictionary *Clouds = [self GetSubDict:JSONWeather KeyToFind:@"clouds"]; //получение подсловаря с данными по облачности
+    NSDictionary *Clouds = JSONWeather[@"clouds"]; //получение подсловаря с данными по облачности
     
     [ShowWeather addObject:[self GetStringFromDict:Clouds KeyToFind:@"all" Description:@"Clouds: " Units:@" \%"]]; // добавление данных по облачности
     NSLog(@"Clouds added"); //вывод в консоль об успешном добавлении
     
-    NSDictionary *Main = [self GetSubDict:JSONWeather KeyToFind:@"main"];// получение подсловаря с основным данным
+    NSDictionary *Main = JSONWeather[@"main"];// получение подсловаря с основным данным
      NSLog(@"Maine added");
-    
+
     [ShowWeather addObject:[self GetStringFromDict:Main KeyToFind:@"humidity" Description:@"Humidity: " Units:@" \%"]];
     [ShowWeather addObject:[self GetStringFromDict:Main KeyToFind:@"pressure" Description:@"Pressure: " Units:@" mbar"]];
     [ShowWeather addObject:[self GetStringFromDict:Main KeyToFind:@"temp" Description:@"Temperature: " Units:@" С"]];
     [ShowWeather addObject:[self GetStringFromDict:Main KeyToFind:@"temp_max" Description:@"Max Temperature: " Units:@" С"]];
     [ShowWeather addObject:[self GetStringFromDict:Main KeyToFind:@"temp_min" Description:@"Min Temperature: " Units:@" C"]];
-    
-    
+
+
     [ShowWeather insertObject:[self GetStringFromDict:JSONWeather KeyToFind:@"name" Description:@"City: " Units:@""] atIndex:0];
      NSLog(@"City added");//вывод в консоль об успешном добавлении
     
-    NSDictionary *Sys = [self GetSubDict:JSONWeather KeyToFind:@"sys"];//получение подсловаря с системными данными
+    NSDictionary *Sys = JSONWeather [@"sys"];//получение подсловаря с системными данными
      NSLog(@"Sys added");//вывод в консоль об успешном добавлении
     
     [ShowWeather insertObject:[self GetStringFromDict:Sys KeyToFind:@"country" Description:@"Country: " Units:@""] atIndex:0];
@@ -121,11 +175,13 @@
         NSLog(@"Weather added");//вывод в консоль об успешном добавлении
         [ShowWeather addObject:[self GetStringFromDict:Weather KeyToFind:@"main" Description:@"Weather: " Units:@""]];
         [ShowWeather addObject:[self GetStringFromDict:Weather KeyToFind:@"description" Description:@"Deteil: "Units:@""]];
+        NSString *ImageUrl =[NSString stringWithFormat:@"%@%@", Weather[@"icon"], @".png"];
+        [ShowWeather insertObject:ImageUrl atIndex:0];
     }
 
 
     
-     NSDictionary *Wind = [self GetSubDict:JSONWeather KeyToFind:@"wind"];//получение подсловаря с данными по ветру
+     NSDictionary *Wind = JSONWeather[@"wind"];//получение подсловаря с данными по ветру
      NSLog(@"wind added");//вывод в консоль об успешном добавлении
     
     [ShowWeather addObject:[self GetStringFromDict:Wind KeyToFind:@"deg" Description:@"Wind: " Units:@" deg"]];
@@ -149,28 +205,22 @@
     // Dispose of any resources that can be recreated.
 }
 
--(NSDictionary *) GetSubDict:(id)SuperDict KeyToFind: (NSString *)SearchKey //метод для выделения подсловаря, если подсловарь не найден, возвращает ноль
-{
-    if (SuperDict[SearchKey]!=Nil) //проверка на наличие подсловаря
-    {
-        return SuperDict[SearchKey];
-        
-    }else{return Nil;}
-}
 
 -(NSString *)GetStringFromDict:(id)Dict KeyToFind: (NSString *)SearchKey Description: (NSString *) WhatIsIt Units: (NSString *) Unit //метод для формирования строки с даннми из словая, если данные не найдены, возвращает ноль
 {
     if (Dict[SearchKey]!=Nil)
     {
-        if ([WhatIsIt isEqual:@"Temperature: "]|[WhatIsIt isEqual:@"Max Temperature: "]|[WhatIsIt isEqual:@"Min Temperature: "]) //проверка являются ли обрабатываемые данные температурой, которую нужно перевести в градусы Цельсия
+        if ([WhatIsIt isEqual:@"Temperature: "]||
+            [WhatIsIt isEqual:@"Max Temperature: "]||
+            [WhatIsIt isEqual:@"Min Temperature: "]) //проверка являются ли обрабатываемые данные температурой, которую нужно перевести в градусы Цельсия
         {
             return [[WhatIsIt stringByAppendingString:[NSString stringWithFormat:@"%@", [self TemperatureInCelsius:Dict[SearchKey]]]] stringByAppendingString:Unit]; //использование специального метода для конвертации гардусов
         }
-        if ([WhatIsIt isEqual:@"Sunrise: "]|[WhatIsIt isEqual:@"Sunset: "]) //Проверка являются ли данные датой заката или восхода, которую нужно отформатировать
+        if ([WhatIsIt isEqual:@"Sunrise: "]||[WhatIsIt isEqual:@"Sunset: "]) //Проверка являются ли данные датой заката или восхода, которую нужно отформатировать
         {
-            return [[WhatIsIt stringByAppendingString:[NSString stringWithFormat:@"%@", [self timeFormatted:Dict[SearchKey]]]]stringByAppendingString:Unit]; //использование специального метода для форматирования даты
+            return [NSString stringWithFormat:@"%@ %@ %@", WhatIsIt, [self timeFormatted:Dict[SearchKey]], Unit]; //использование специального метода для форматирования даты
         }
-        return [[WhatIsIt stringByAppendingString:[NSString stringWithFormat:@"%@", Dict[SearchKey]]]stringByAppendingString:Unit];
+        return [NSString stringWithFormat:@"%@ %@ %@", WhatIsIt, Dict[SearchKey], Unit];
         
     }else{return Nil;}
 }
